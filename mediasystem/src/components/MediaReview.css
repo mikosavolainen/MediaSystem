@@ -1,6 +1,7 @@
 /* src/components/MediaReview.css */
 
 .media-review {
+        user-select:none;
     padding: 20px;
     background-color: white;
     border: 1px solid var(--border-color);
@@ -8,6 +9,7 @@
 }
 
 .media-review img {
+        user-select:none;
     max-width: 100%;
     margin-bottom: 15px;
     border: 1px solid var(--border-color);
@@ -15,6 +17,7 @@
 }
 
 .annotation-button {
+        user-select:none;
     background-color: var(--primary-color);
     color: white;
     padding: 8px 12px;
@@ -25,28 +28,37 @@
 }
 
 .annotation-list {
+        user-select:none;
     margin-top: 15px;
 }
 
 .annotation-list ul {
+        user-select:none;
     list-style-type: none;
     padding-left: 0;
 }
 
 .annotation-list li {
+        user-select:none;
     padding: 8px;
     border-bottom: 1px solid var(--border-color);
 }
 /* src/components/MediaReview.css */
-img{
-    user-select: none;
+img {
+  -webkit-user-drag: none;
+  -khtml-user-drag: none;
+  -moz-user-drag: none;
+  -o-user-drag: none;
+  user-drag: none;
 }
 .image-container {
+        user-select:none;
     position: relative;
     display: inline-block;
 }
 
 .annotation-marker {
+        user-select:none;
     position: absolute;
     width: 10px;
     height: 10px;
@@ -59,4 +71,34 @@ img{
 
 .annotation-marker:hover {
     transform: scale(1.2);
+}
+
+.annotation-marker {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    opacity: 1;
+}
+
+.flashing {
+    animation: flashAnimation 1s infinite alternate;
+}
+
+@keyframes flashAnimation {
+    0% {
+        background-color: #FF0000; /* Red */
+    }
+    25% {
+        background-color: #00FF00; /* Green */
+    }
+    50% {
+        background-color: #0000FF; /* Blue */
+    }
+    75% {
+        background-color: #FFFF00; /* Yellow */
+    }
+    100% {
+        background-color: #FF00FF; /* Magenta */
+    }
 }
