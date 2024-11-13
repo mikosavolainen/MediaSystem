@@ -1,13 +1,14 @@
 <?php
-// MySQL Connection
+use MongoDB\Client;
+
 $serverName = "37.136.11.1";
 $userName = "root";
 $password = "1234592";
 $databaseName = "mediaserver";
 
-// MongoDB Connection
+
 try {
-    // Use the correct class for MongoDB connection
+    
     $mongoClient = new MongoDB\Client("mongodb://Kissa:KissaKala2146@37.219.64.107:27018/");
     $mongoDatabase = $mongoClient->mediaserver;
     $mongoCollection = $mongoDatabase->react_php;
