@@ -6,15 +6,20 @@ $password = "1234592";
 $databaseName = "mediaserver";
 
 // MongoDB Connection
-require '../backend/c'; // Make sure MongoDB library is installed with Composer
-$mongoClient = new MongoDB\Client("mongodb://root:1234592@37.136.11.1:27017");
-$mongoDatabase = $mongoClient->mediaserver;
-$mongoCollection = $mongoDatabase->react_php;
+try {
+    // Use the correct class for MongoDB connection
+    $mongoClient = new MongoDB\Client("mongodb://root:1234592@37.136.11.1:27017");
+    $mongoDatabase = $mongoClient->mediaserver;
+    $mongoCollection = $mongoDatabase->react_php;
+    echo "Connected to MongoDB successfully.<br>";
+} catch (Exception $e) {
+    die("MongoDB connection failed: " . $e->getMessage());
+}
 
 // Get the text from POST request
 $recText = $_POST['text'];
 
-// MySQL query
+// MySQL connection
 $conn = mysqli_connect($serverName, $userName, $password, $databaseName);
 if (!$conn) {
     die("Connection failed: " . mysqli_connect_error());
