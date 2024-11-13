@@ -1,24 +1,27 @@
-import logo from './logo.svg';
-import './App.css';
-
+import React from 'react';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { AppProvider } from './context/AppContext';
+import Dashboard from './pages/Dashboard';
+import Tasks from './pages/Tasks';
+import UploadMedia from './pages/UploadMedia';
+import ReviewMedia from './pages/ReviewMedia';
+import Reports from './pages/Reports';
+import Header from './components/Header';
+import "./App.css"
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <AppProvider>
+      <Router>
+        <Header />
+        <Routes>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/tasks" element={<Tasks />} />
+          <Route path="/upload" element={<UploadMedia />} />
+          <Route path="/review" element={<ReviewMedia />} />
+          <Route path="/reports" element={<Reports />} />
+        </Routes>
+      </Router>
+    </AppProvider>
   );
 }
 
