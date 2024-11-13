@@ -8,7 +8,7 @@ $databaseName = "mediaserver";
 // MongoDB Connection
 try {
     // Use the correct class for MongoDB connection
-    $mongoClient = new MongoDB\Client("mongodb://root:1234592@37.136.11.1:27017");
+    $mongoClient = new MongoDB\Client("mongodb://Kissa:KissaKala2146@37.219.64.107:27018/");
     $mongoDatabase = $mongoClient->mediaserver;
     $mongoCollection = $mongoDatabase->react_php;
     echo "Connected to MongoDB successfully.<br>";
