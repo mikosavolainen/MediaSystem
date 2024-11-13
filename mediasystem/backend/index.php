@@ -1,8 +1,8 @@
 <?PHP 
-$serverName="localhost";
+$serverName="37.136.11.1";
 $userName="root";
-$password="";
-$databaseName="react_php";
+$password="1234592";
+$databaseName="mediaserver";
 $conn = mysqli_connect($serverName, $userName, $password, $databaseName);
 
 $recText = $_POST['text'];
