@@ -1,5 +1,5 @@
 <?php
-use MongoDB\Client;
+require 'vendor/autoload.php';
 
 $serverName = "37.136.11.1";
 $userName = "root";
