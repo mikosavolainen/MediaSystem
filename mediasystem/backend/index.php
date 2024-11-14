@@ -1,4 +1,5 @@
 <?php
+phpinfo();
 require 'vendor/autoload.php';
 
 $serverName = "37.136.11.1";
@@ -6,9 +7,11 @@ $userName = "root";
 $password = "1234592";
 $databaseName = "mediaserver";
 
+$mongouri = 'mongodb://<hostname>:<port>/?tls=true&tlsDisableOCSPEndpointCheck=true';
+
 
 try {
-    $mongoClient = new MongoDB\Client("mongodb://Kissa:KissaKala2146@37.219.64.107:27018/");
+    $mongoClient = new MongoDB\Client($mongouri);
     $mongoDatabase = $mongoClient->mediaserver;
     $mongoCollection = $mongoDatabase->react_php;
     echo "Connected to MongoDB successfully.<br>";

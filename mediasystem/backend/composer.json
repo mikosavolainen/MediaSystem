@@ -1,16 +1,4 @@
 {
-    "name": "oppilas1/backend",
-    "autoload": {
-        "psr-4": {
-            "Oppilas1\\Backend\\": "src/"
-        }
-    },
-    "authors": [
-        {
-            "name": "mikosavolainen",
-            "email": "miko.markus2112@gmail.com"
-        }
-    ],
     "require": {
         "mongodb/mongodb": "^1.20"
     }
