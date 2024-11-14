@@ -1,5 +1,15 @@
 {
-    "require": {
-        "monolog/monolog": "2.0.*"
-    }
+    "name": "oppilas1/backend",
+    "autoload": {
+        "psr-4": {
+            "Oppilas1\\Backend\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "mikosavolainen",
+            "email": "miko.markus2112@gmail.com"
+        }
+    ],
+    "require": {}
 }
