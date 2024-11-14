@@ -81,24 +81,4 @@ img {
     opacity: 1;
 }
 
-.flashing {
-    animation: flashAnimation 1s infinite alternate;
-}
 
-@keyframes flashAnimation {
-    0% {
-        background-color: #FF0000; /* Red */
-    }
-    25% {
-        background-color: #00FF00; /* Green */
-    }
-    50% {
-        background-color: #0000FF; /* Blue */
-    }
-    75% {
-        background-color: #FFFF00; /* Yellow */
-    }
-    100% {
-        background-color: #FF00FF; /* Magenta */
-    }
-}
