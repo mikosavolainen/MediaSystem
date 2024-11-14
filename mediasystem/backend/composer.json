@@ -11,5 +11,7 @@
             "email": "miko.markus2112@gmail.com"
         }
     ],
-    "require": {}
+    "require": {
+        "mongodb/mongodb": "^1.20"
+    }
 }
