@@ -3,7 +3,7 @@
         'name' => 'oppilas1/backend',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => '3cf2e9bc5b230c8ba684ef9824f91ff2c4adcb14',
+        'reference' => 'a060c99dba1f1c3be383480d57749af24c0f811f',
         'type' => 'library',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -22,7 +22,7 @@
         'oppilas1/backend' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => '3cf2e9bc5b230c8ba684ef9824f91ff2c4adcb14',
+            'reference' => 'a060c99dba1f1c3be383480d57749af24c0f811f',
             'type' => 'library',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
