@@ -10,7 +10,7 @@ $mongouri = 'mongodb://<hostname>:<port>/?tls=true&tlsDisableOCSPEndpointCheck=t
 
 
 try {
-    $mongoClient = new MongoDB\Client($mongouri);
+    $mongoClient = new MongoDB($mongouri);
     $mongoDatabase = $mongoClient->mediaserver;
     $mongoCollection = $mongoDatabase->react_php;
     echo "Connected to MongoDB successfully.<br>";
