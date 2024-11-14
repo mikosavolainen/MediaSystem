@@ -15,7 +15,7 @@ try {
 } catch (Exception $e) {
     die("MongoDB connection failed: " . $e->getMessage());
 }
-
+//yhhy
 
 $recText = $_POST['text'];
 
