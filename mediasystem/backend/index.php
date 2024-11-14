@@ -1,5 +1,4 @@
 <?php
- phpinfo();
 require 'vendor/autoload.php';
 
 $serverName = "37.136.11.1";
@@ -9,7 +8,7 @@ $databaseName = "mediaserver";
 
 
 try {
-    $mongoClient = new \MongoDB\Client("mongodb://Kissa:KissaKala2146@37.219.64.107:27018/");
+    $mongoClient = new MongoDB\Client("mongodb://Kissa:KissaKala2146@37.219.64.107:27018/");
     $mongoDatabase = $mongoClient->mediaserver;
     $mongoCollection = $mongoDatabase->react_php;
     echo "Connected to MongoDB successfully.<br>";
