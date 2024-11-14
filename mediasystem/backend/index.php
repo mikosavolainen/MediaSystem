@@ -1,5 +1,4 @@
 <?php
-phpinfo();
 require 'vendor/autoload.php';
 
 $serverName = "37.136.11.1";
