@@ -30,7 +30,7 @@ if (!$conn) {
 }
 
 try {
-    $mongoClient = new MongoClient("mongodb://Kissa:KissaKala2146@37.219.64.107:27018/");
+    $mongoClient = new MongoClient("mongodb://Kissa:KissaKala2146@37.136.11.1:27018/");
     $mongoDatabase = $mongoClient->mediaserver;
     $mongoCollection = $mongoDatabase->react_php;
 } catch (Exception $e) {
@@ -96,21 +96,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'register') {
         exit;
     }
 
-    $jwt = $authHeader; // JWT token directly in the Authorization header, without the "Bearer" prefix
+    $jwt = $authHeader; 
     if (empty($jwt)) {
         echo json_encode(["status" => "fail", "message" => "Invalid token format."]);
         exit;
     }
 
     try {
-        // Decode JWT token
         $decoded = JWT::decode($jwt, new Key($jwt_secret, 'HS256'));
     } catch (Exception $e) {
         echo json_encode(["status" => "fail", "message" => "Unauthorized. " . $e->getMessage()]);
         exit;
     }
 
-    // Get metadata and file from the request
     $metadata = $_POST['metadata'] ?? '';
     $file = $_FILES['file'] ?? null;
 
@@ -120,29 +118,62 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'register') {
         exit;
     }
 
-    // Define upload directory and handle the file upload
-    $uploadDir = 'uploads/';
-    $filePath = $uploadDir . basename($file['name']);
-
-    if (move_uploaded_file($file['tmp_name'], $filePath)) {
-        // Insert document into MongoDB with file path and metadata
-        $document = [
-            'file_path' => $filePath,   
-            'metadata' => $metadata,    
-            'upload_date' => new MongoDB\BSON\UTCDateTime(),  
-        ];
-
-        $mongoResult = $mongoCollection->insertOne($document);
-
-        if ($mongoResult->getInsertedCount() > 0) {
-            echo json_encode(["status" => "success", "message" => "Media uploaded and saved in MongoDB."]);
-        } else {
-            echo json_encode(["status" => "fail", "message" => "Failed to save the media in MongoDB."]);
-        }
-    } else {
-        echo json_encode(["status" => "fail", "message" => "Upload failed."]);
+    // Check if the file is valid
+    if ($file['error'] !== UPLOAD_ERR_OK) {
+        echo json_encode(["status" => "fail", "message" => "File upload error."]);
+        exit;
     }
-} elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'assign-task') {
+
+    // MongoDB GridFS initialization
+    $mongoGridFS = $mongoDatabase->selectGridFSBucket();
+
+// Avaa tiedosto lukemista varten
+$fileStream = fopen($file['tmp_name'], 'rb');
+if ($fileStream === false) {
+    echo json_encode(["status" => "fail", "message" => "Failed to open file for reading."]);
+    exit;
+}
+
+// Tarkista metadata ja varmista, että se on taulukko
+if (!empty($metadata) && is_string($metadata)) {
+    // Muutetaan metadata objektille, jos se on merkkijono
+    $metadata = ['info' => $metadata]; // Esimerkki metadata-objektista
+}
+
+// Luo GridFS-tiedosto-dokumentti
+try {
+    // Lataa tiedosto GridFS:ään
+    $fileId = $mongoGridFS->uploadFromStream(
+        $file['name'], 
+        $fileStream,
+        [
+            'metadata' => $metadata, // metadata nyt taulukkona
+            'contentType' => $file['type']
+        ]
+    );
+
+    fclose($fileStream); // Sulje tiedoston stream
+
+    // Luo dokumentti, joka tallennetaan MongoDB:hen (tallennetaan tiedoston ID ja metadata)
+    $document = [
+        'file_id' => $fileId,
+        'metadata' => $metadata, // metadata tallennetaan
+        'upload_date' => new MongoDB\BSON\UTCDateTime(),
+    ];
+
+    // Lisää dokumentti MongoDB:hen
+    $mongoResult = $mongoCollection->insertOne($document);
+
+    if ($mongoResult->getInsertedCount() > 0) {
+        echo json_encode(["status" => "success", "message" => "Media uploaded and saved in MongoDB."]);
+    } else {
+        echo json_encode(["status" => "fail", "message" => "Failed to save the media in MongoDB."]);
+    }
+} catch (Exception $e) {
+    echo json_encode(["status" => "fail", "message" => "Error uploading file to MongoDB GridFS: " . $e->getMessage()]);
+}
+}
+ elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'assign-task') {
     // Verify JWT Token
     $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
     if (empty($authHeader)) {
