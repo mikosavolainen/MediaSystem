@@ -4,19 +4,21 @@ header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS"); 
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With"); 
 
-
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit;
 }
 
 require 'vendor/autoload.php';
+use \Firebase\JWT\JWT;
 
 $serverName = "37.136.11.1";
 $userName = "root";
 $password = "1234592";
 $databaseName = "mediaserver";
 $port = 3308;
+
+$jwt_secret = 'Heh meidän salainen avain :O. ei oo ku meiän! ・:，。★＼(*v*)♪Merry Xmas♪(*v*)/★，。・:・゜ :DD XD XRP ┐( ͡◉ ͜ʖ ͡◉)┌ QSO QRZ ( ͡~ ͜ʖ ͡° ) QRO ( ˘▽˘)っ♨ QRP DLR JKFJ °₊·ˈ∗♡( ˃̶᷇ ‧̫ ˂̶᷆ )♡∗ˈ‧₊°';
 
 $conn = mysqli_connect($serverName, $userName, $password, $databaseName, $port);
 if (!$conn) {
@@ -28,7 +30,7 @@ try {
     $mongoDatabase = $mongoClient->mediaserver;
     $mongoCollection = $mongoDatabase->react_php;
 } catch (Exception $e) {
-    die(json_encode(["status" => "fail", "message" => "MongoDB connection failed: " . $e->getMessage()]));
+    die(json_encode(["status" => "fail", "message" => "MongoDB connection failed: " . $e->getMessage()]));  
 }
 
 if (!isset($_GET['action'])) {
@@ -66,12 +68,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'register') {
     $result = mysqli_query($conn, $query);
 
     if (mysqli_num_rows($result) > 0) {
-        $token = bin2hex(random_bytes(16));
-        echo json_encode(["status" => "success", "token" => $token]);
+        $user = mysqli_fetch_assoc($result);
+
+        // Generate JWT token
+        $payload = [
+            'iss' => 'your_issuer',  // Issuer
+            'iat' => time(),         // Issued At
+            'exp' => time() + 3600,  // Expiry time (1 hour)
+            'username' => $username  // Custom payload
+        ];
+
+        // Fix: Add the algorithm 'HS256' as the third argument
+        $jwt = JWT::encode($payload, $jwt_secret, 'HS256');
+
+        echo json_encode(["status" => "success", "token" => $jwt]);
     } else {
         echo json_encode(["status" => "fail", "message" => "Invalid credentials."]);
     }
 } elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'upload-media') {
+    // Verify JWT Token
+    $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+    if (empty($authHeader)) {
+        echo json_encode(["status" => "fail", "message" => "Authorization header is missing."]);
+        exit;
+    }
+
+    list($jwt) = sscanf($authHeader, 'Bearer %s');
+    if (empty($jwt)) {
+        echo json_encode(["status" => "fail", "message" => "Invalid token format."]);
+        exit;
+    }
+
+    try {
+        $decoded = JWT::decode($jwt, $jwt_secret, ['HS256']);
+    } catch (Exception $e) {
+        echo json_encode(["status" => "fail", "message" => "Unauthorized. " . $e->getMessage()]);
+        exit;
+    }
+
     $metadata = $_POST['metadata'] ?? '';
     $file = $_FILES['file'] ?? null;
 
@@ -92,6 +126,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'register') {
         echo json_encode(["status" => "fail", "message" => "Upload failed."]);
     }
 } elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'assign-task') {
+    // Verify JWT Token
+    $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+    if (empty($authHeader)) {
+        echo json_encode(["status" => "fail", "message" => "Authorization header is missing."]);
+        exit;
+    }
+
+    list($jwt) = sscanf($authHeader, 'Bearer %s');
+    if (empty($jwt)) {
+        echo json_encode(["status" => "fail", "message" => "Invalid token format."]);
+        exit;
+    }
+
+    try {
+        $decoded = JWT::decode($jwt, $jwt_secret, ['HS256']);
+    } catch (Exception $e) {
+        echo json_encode(["status" => "fail", "message" => "Unauthorized. " . $e->getMessage()]);
+        exit;
+    }
+
     $taskId = $_POST['task_id'] ?? '';
     $expertId = $_POST['expert_id'] ?? '';
 
@@ -107,6 +161,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'register') {
         echo json_encode(["status" => "fail", "message" => "Task assignment failed."]);
     }
 } elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'review-media') {
+    // Verify JWT Token
+    $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+    if (empty($authHeader)) {
+        echo json_encode(["status" => "fail", "message" => "Authorization header is missing."]);
+        exit;
+    }
+
+    list($jwt) = sscanf($authHeader, 'Bearer %s');
+    if (empty($jwt)) {
+        echo json_encode(["status" => "fail", "message" => "Invalid token format."]);
+        exit;
+    }
+
+    try {
+        $decoded = JWT::decode($jwt, $jwt_secret, ['HS256']);
+    } catch (Exception $e) {
+        echo json_encode(["status" => "fail", "message" => "Unauthorized. " . $e->getMessage()]);
+        exit;
+    }
+
     $taskId = $_POST['task_id'] ?? '';
     $annotations = $_POST['annotations'] ?? '';
     $status = $_POST['status'] ?? '';
@@ -125,6 +199,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'register') {
         echo json_encode(["status" => "fail", "message" => "Review update failed."]);
     }
 } elseif ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'get-tasks') {
+    // Verify JWT Token
+    $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+    if (empty($authHeader)) {
+        echo json_encode(["status" => "fail", "message" => "Authorization header is missing."]);
+        exit;
+    }
+
+    list($jwt) = sscanf($authHeader, 'Bearer %s');
+    if (empty($jwt)) {
+        echo json_encode(["status" => "fail", "message" => "Invalid token format."]);
+        exit;
+    }
+
+    try {
+        $decoded = JWT::decode($jwt, $jwt_secret, ['HS256']);
+    } catch (Exception $e) {
+        echo json_encode(["status" => "fail", "message" => "Unauthorized. " . $e->getMessage()]);
+        exit;
+    }
+
     $role = $_GET['role'] ?? '';
 
     if (empty($role)) {
