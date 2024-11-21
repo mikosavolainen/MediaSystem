@@ -5,12 +5,12 @@ $serverName = "37.136.11.1";
 $userName = "root";
 $password = "1234592";
 $databaseName = "mediaserver";
+$port = 3308;
 
-$mongouri = 'mongodb://<hostname>:<port>/?tls=true&tlsDisableOCSPEndpointCheck=true';
 
 
 try {
-    $mongoClient = new MongoDB($mongouri);
+    $mongoClient = new MongoDB\Client("mongodb://Kissa:KissaKala2146@37.219.64.107:27018/");
     $mongoDatabase = $mongoClient->mediaserver;
     $mongoCollection = $mongoDatabase->react_php;
     echo "Connected to MongoDB successfully.<br>";
@@ -19,16 +19,13 @@ try {
 }
 //yhhy
 
-$recText = $_POST['text'];
-
-
-$conn = mysqli_connect($serverName, $userName, $password, $databaseName);
+$conn = mysqli_connect($serverName, $userName, $password, $databaseName, $port);
 if (!$conn) {
     die("Connection failed: " . mysqli_connect_error());
 }
 
 
-$mysqlQuery = "INSERT INTO react_php (texts) VALUES ('$recText')";
+$mysqlQuery = "INSERT INTO react_php (texts) VALUES ('x')";
 if (mysqli_query($conn, $mysqlQuery)) {
     echo "Data has been inserted into MySQL successfully.<br>";
 } else {
@@ -36,7 +33,7 @@ if (mysqli_query($conn, $mysqlQuery)) {
 }
 
 
-$mongoDocument = ['texts' => $recText];
+$mongoDocument = ['texts' => $x];
 $mongoResult = $mongoCollection->insertOne($mongoDocument);
 
 
