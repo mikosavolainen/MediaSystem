@@ -41,7 +41,8 @@ const Back = styled(CardSide)(({ theme }) => ({
     transform: "rotateY(180deg)",
 }));
 
-const AuthPage = () => {
+const AuthPage = ({ token, setToken }) => {
+
     const [isFlipped, setIsFlipped] = useState(false);
     const [formData, setFormData] = useState({
         username: "",
@@ -49,7 +50,7 @@ const AuthPage = () => {
         password: "",
     });
     const [error, setError] = useState(null);
-    const [token, setToken] = useState(null);
+
 
     const handleToggle = () => {
         setIsFlipped((prev) => !prev);
@@ -84,7 +85,7 @@ const AuthPage = () => {
             return;
         }
 
-        const endpoint = isLogin ? "http://localhost:3000/mediasystem/backend/server.php?action=login" : "http://localhost:3000/mediasystem/backend/server.php?action=register";
+        const endpoint = isLogin ? "http://localhost:24243/mediasystem/backend/server.php?action=login" : "http://localhost:24243/mediasystem/backend/server.php?action=register";
         const payload = isLogin
             ? { username: formData.username, password: formData.password }
             : formData;
@@ -93,15 +94,18 @@ const AuthPage = () => {
             const response = await fetch(endpoint, {
                 method: "POST",
                 headers: {
-                    "Content-Type": "application/json",
+                    'Content-Type': 'application/x-www-form-urlencoded',
                 },
-                body: JSON.stringify(payload),
+                body: new URLSearchParams(payload),
             });
 
             if (response.ok) {
                 const data = await response.json();
-                setToken(data.token);
-                alert(`${isLogin ? "Login" : "Registration"} successful! Token: ${data.token}`);
+                console.log(data)
+                if (data.status == "success") {
+                    setToken(data.token);
+                    alert(`${isLogin ? "Login" : "Registration"} successful! Token: ${data.token}`);
+                }
             } else {
                 const errorData = await response.json();
                 setError(errorData.message || "An error occurred.");
