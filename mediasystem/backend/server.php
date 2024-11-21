@@ -11,6 +11,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 require 'vendor/autoload.php';
 use \Firebase\JWT\JWT;
+use \Firebase\JWT\KEY;
+
+use MongoDB\Client as MongoClient;
 
 $serverName = "37.136.11.1";
 $userName = "root";
@@ -20,13 +23,14 @@ $port = 3308;
 
 $jwt_secret = 'Heh meidän salainen avain :O. ei oo ku meiän! ・:，。★＼(*v*)♪Merry Xmas♪(*v*)/★，。・:・゜ :DD XD XRP ┐( ͡◉ ͜ʖ ͡◉)┌ QSO QRZ ( ͡~ ͜ʖ ͡° ) QRO ( ˘▽˘)っ♨ QRP DLR JKFJ °₊·ˈ∗♡( ˃̶᷇ ‧̫ ˂̶᷆ )♡∗ˈ‧₊°';
 
+
 $conn = mysqli_connect($serverName, $userName, $password, $databaseName, $port);
 if (!$conn) {
     die(json_encode(["status" => "fail", "message" => "MySQL connection failed."]));
 }
 
 try {
-    $mongoClient = new MongoDB\Client("mongodb://Kissa:KissaKala2146@37.219.64.107:27018/");
+    $mongoClient = new MongoClient("mongodb://Kissa:KissaKala2146@37.219.64.107:27018/");
     $mongoDatabase = $mongoClient->mediaserver;
     $mongoCollection = $mongoDatabase->react_php;
 } catch (Exception $e) {
@@ -70,15 +74,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'register') {
     if (mysqli_num_rows($result) > 0) {
         $user = mysqli_fetch_assoc($result);
 
-        // Generate JWT token
+       
         $payload = [
-            'iss' => 'your_issuer',  // Issuer
-            'iat' => time(),         // Issued At
-            'exp' => time() + 3600,  // Expiry time (1 hour)
-            'username' => $username  // Custom payload
+            'iss' => 'your_issuer',  
+            'iat' => time(),        
+            'exp' => time() + 3600, 
+            'username' => $username  
         ];
 
-        // Fix: Add the algorithm 'HS256' as the third argument
         $jwt = JWT::encode($payload, $jwt_secret, 'HS256');
 
         echo json_encode(["status" => "success", "token" => $jwt]);
@@ -86,42 +89,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'register') {
         echo json_encode(["status" => "fail", "message" => "Invalid credentials."]);
     }
 } elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'upload-media') {
-    // Verify JWT Token
+    // Verify JWT Token (no 'Bearer' prefix)
     $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
     if (empty($authHeader)) {
         echo json_encode(["status" => "fail", "message" => "Authorization header is missing."]);
         exit;
     }
 
-    list($jwt) = sscanf($authHeader, 'Bearer %s');
+    $jwt = $authHeader; // JWT token directly in the Authorization header, without the "Bearer" prefix
     if (empty($jwt)) {
         echo json_encode(["status" => "fail", "message" => "Invalid token format."]);
         exit;
     }
 
     try {
-        $decoded = JWT::decode($jwt, $jwt_secret, ['HS256']);
+        // Decode JWT token
+        $decoded = JWT::decode($jwt, new Key($jwt_secret, 'HS256'));
     } catch (Exception $e) {
         echo json_encode(["status" => "fail", "message" => "Unauthorized. " . $e->getMessage()]);
         exit;
     }
 
+    // Get metadata and file from the request
     $metadata = $_POST['metadata'] ?? '';
     $file = $_FILES['file'] ?? null;
 
+    // Validate metadata and file presence
     if (empty($metadata) || !$file) {
         echo json_encode(["status" => "fail", "message" => "Metadata or file is missing."]);
         exit;
     }
 
+    // Define upload directory and handle the file upload
     $uploadDir = 'uploads/';
     $filePath = $uploadDir . basename($file['name']);
 
     if (move_uploaded_file($file['tmp_name'], $filePath)) {
-        $query = "INSERT INTO media (file_path, metadata) VALUES ('$filePath', '$metadata')";
-        mysqli_query($conn, $query);
+        // Insert document into MongoDB with file path and metadata
+        $document = [
+            'file_path' => $filePath,   
+            'metadata' => $metadata,    
+            'upload_date' => new MongoDB\BSON\UTCDateTime(),  
+        ];
 
-        echo json_encode(["status" => "success", "message" => "Media uploaded."]);
+        $mongoResult = $mongoCollection->insertOne($document);
+
+        if ($mongoResult->getInsertedCount() > 0) {
+            echo json_encode(["status" => "success", "message" => "Media uploaded and saved in MongoDB."]);
+        } else {
+            echo json_encode(["status" => "fail", "message" => "Failed to save the media in MongoDB."]);
+        }
     } else {
         echo json_encode(["status" => "fail", "message" => "Upload failed."]);
     }
@@ -140,7 +157,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'register') {
     }
 
     try {
-        $decoded = JWT::decode($jwt, $jwt_secret, ['HS256']);
+        $decoded = JWT::decode($jwt, new Key($jwt_secret, 'HS256'));
     } catch (Exception $e) {
         echo json_encode(["status" => "fail", "message" => "Unauthorized. " . $e->getMessage()]);
         exit;
@@ -175,7 +192,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'register') {
     }
 
     try {
-        $decoded = JWT::decode($jwt, $jwt_secret, ['HS256']);
+        $decoded = JWT::decode($jwt, new Key($jwt_secret, 'HS256'));
     } catch (Exception $e) {
         echo json_encode(["status" => "fail", "message" => "Unauthorized. " . $e->getMessage()]);
         exit;
@@ -213,7 +230,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'register') {
     }
 
     try {
-        $decoded = JWT::decode($jwt, $jwt_secret, ['HS256']);
+        $decoded = JWT::decode($jwt, new Key($jwt_secret, 'HS256'));
     } catch (Exception $e) {
         echo json_encode(["status" => "fail", "message" => "Unauthorized. " . $e->getMessage()]);
         exit;
