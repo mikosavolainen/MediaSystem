@@ -22,10 +22,6 @@ class ComposerStaticInit2a7e78c44077885ecebd6089e3b7c7fd
         array (
             'Psr\\Log\\' => 8,
         ),
-        'O' => 
-        array (
-            'Oppilas1\\Backend\\' => 17,
-        ),
         'M' => 
         array (
             'MongoDB\\' => 8,
@@ -44,10 +40,6 @@ class ComposerStaticInit2a7e78c44077885ecebd6089e3b7c7fd
         'Psr\\Log\\' => 
         array (
             0 => __DIR__ . '/..' . '/psr/log/src',
-        ),
-        'Oppilas1\\Backend\\' => 
-        array (
-            0 => __DIR__ . '/../..' . '/src',
         ),
         'MongoDB\\' => 
         array (

@@ -1,6 +1,5 @@
 {
     "require": {
-        "mongodb/mongodb": "^1.20",
-        "symfony/polyfill-php80": "^1.23"
+        "mongodb/mongodb": "^1.20"
     }
 }
