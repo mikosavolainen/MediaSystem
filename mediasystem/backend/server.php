@@ -96,13 +96,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'register') {
         exit;
     }
 
-    $jwt = $authHeader; 
+    list($jwt) = sscanf($authHeader, 'Bearer %s');
+
+
     if (empty($jwt)) {
         echo json_encode(["status" => "fail", "message" => "Invalid token format."]);
         exit;
     }
 
     try {
+        // Decode JWT token
         $decoded = JWT::decode($jwt, new Key($jwt_secret, 'HS256'));
     } catch (Exception $e) {
         echo json_encode(["status" => "fail", "message" => "Unauthorized. " . $e->getMessage()]);
