@@ -4,9 +4,9 @@ import Login from "./components/login"
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 
 function App() {
-  const { token, settoken } = useState(false)
+  const [ token, setToken ] = useState(null)
   if (!token) {
-    return <Login/>
+    return <Login token={token} setToken={setToken}/>
   }
   return (
     <></>
