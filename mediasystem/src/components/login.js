@@ -84,7 +84,7 @@ const AuthPage = () => {
             return;
         }
 
-        const endpoint = isLogin ? "/api/login" : "/api/register";
+        const endpoint = isLogin ? "http://localhost:3000/mediasystem/backend/server.php?action=login" : "http://localhost:3000/mediasystem/backend/server.php?action=register";
         const payload = isLogin
             ? { username: formData.username, password: formData.password }
             : formData;
