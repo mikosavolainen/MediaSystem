@@ -28,7 +28,7 @@ try {
     $mongoDatabase = $mongoClient->mediaserver;
     $mongoCollection = $mongoDatabase->react_php;
 } catch (Exception $e) {
-    die(json_encode(["status" => "fail", "message" => "MongoDB connection failed: " . $e->getMessage()])));
+    die(json_encode(["status" => "fail", "message" => "MongoDB connection failed: " . $e->getMessage()]));
 }
 
 if (!isset($_GET['action'])) {
