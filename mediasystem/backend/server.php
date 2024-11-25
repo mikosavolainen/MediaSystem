@@ -292,7 +292,7 @@ try {
     $tasks = mysqli_fetch_all($result, MYSQLI_ASSOC);
 
     echo json_encode(["status" => "success", "tasks" => $tasks]);
-} elseif ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'get-reports') {
+} elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'get-reports') {
     $query = "SELECT assigned_to, COUNT(*) as completed_tasks FROM tasks WHERE status='OK' GROUP BY assigned_to";
     $result = mysqli_query($conn, $query);
 
