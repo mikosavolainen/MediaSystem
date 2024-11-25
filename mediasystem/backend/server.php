@@ -292,12 +292,14 @@ try {
     $tasks = mysqli_fetch_all($result, MYSQLI_ASSOC);
 
     echo json_encode(["status" => "success", "tasks" => $tasks]);
-} elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'get-reports') {
+} elseif ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'get-reports') {
     $query = "SELECT assigned_to, COUNT(*) as completed_tasks FROM tasks WHERE status='OK' GROUP BY assigned_to";
     $result = mysqli_query($conn, $query);
 
     $report = mysqli_fetch_all($result, MYSQLI_ASSOC);
     echo json_encode(["status" => "success", "report" => $report]);
+
+
 }   elseif ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'get-image') {
     // Verify JWT Token (optional, if you want to secure access)
     $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
@@ -351,7 +353,45 @@ try {
         echo json_encode(["status" => "fail", "message" => "Error retrieving file: " . $e->getMessage()]);
         exit;
     }
-} else {
+}elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'create-task') {
+    // Verify JWT Token
+    $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+    if (empty($authHeader)) {
+        echo json_encode(["status" => "fail", "message" => "Authorization header is missing."]);
+        exit;
+    }
+
+    list($jwt) = sscanf($authHeader, 'Bearer %s');
+    if (empty($jwt)) {
+        echo json_encode(["status" => "fail", "message" => "Invalid token format."]);
+        exit;
+    }
+
+    try {
+        $decoded = JWT::decode($jwt, new Key($jwt_secret, 'HS256'));
+    } catch (Exception $e) {
+        echo json_encode(["status" => "fail", "message" => "Unauthorized. " . $e->getMessage()]);
+        exit;
+    }
+
+    $title = $_POST['title'] ?? '';
+    $description = $_POST['description'] ?? '';
+    $createdBy = $decoded->username; // Retrieve the username from the decoded JWT.
+
+    if (empty($title) || empty($description)) {
+        echo json_encode(["status" => "fail", "message" => "Title or description is missing."]);
+        exit;
+    }
+
+    $query = "INSERT INTO tasks (title, description, created_by) VALUES ('$title', '$description', '$createdBy')";
+    if (mysqli_query($conn, $query)) {
+        echo json_encode(["status" => "success", "message" => "Task created successfully."]);
+    } else {
+        echo json_encode(["status" => "fail", "message" => "Task creation failed: " . mysqli_error($conn)]);
+    }
+
+} 
+else {
     echo json_encode(["status" => "fail", "message" => "Invalid endpoint or method."]);
 }
 
