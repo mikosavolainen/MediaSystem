@@ -300,6 +300,59 @@ try {
 
     $report = mysqli_fetch_all($result, MYSQLI_ASSOC);
     echo json_encode(["status" => "success", "report" => $report]);
+}   elseif ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'get-image') {
+    // Verify JWT Token (optional, if you want to secure access)
+    $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+    if (empty($authHeader)) {
+        echo json_encode(["status" => "fail", "message" => "Authorization header is missing."]);
+        exit;
+    }
+
+    list($jwt) = sscanf($authHeader, 'Bearer %s');
+    if (empty($jwt)) {
+        echo json_encode(["status" => "fail", "message" => "Invalid token format."]);
+        exit;
+    }
+
+    try {
+        $decoded = JWT::decode($jwt, new Key($jwt_secret, 'HS256'));
+    } catch (Exception $e) {
+        echo json_encode(["status" => "fail", "message" => "Unauthorized. " . $e->getMessage()]);
+        exit;
+    }
+
+    // Get file_id from the query parameters
+    $fileId = $_GET['file_id'] ?? '';
+    if (empty($fileId)) {
+        echo json_encode(["status" => "fail", "message" => "File ID is missing."]);
+        exit;
+    }
+
+    try {
+        // Convert file ID to MongoDB ObjectId
+        $fileObjectId = new MongoDB\BSON\ObjectId($fileId);
+
+        // Retrieve file from GridFS
+        $stream = fopen('php://output', 'wb'); // Output stream for the file
+        $mongoGridFS = $mongoDatabase->selectGridFSBucket();
+        $mongoGridFS->downloadToStream($fileObjectId, $stream);
+
+        // Retrieve the file's metadata
+        $fileInfo = $mongoGridFS->findOne(['_id' => $fileObjectId]);
+        if (!$fileInfo) {
+            echo json_encode(["status" => "fail", "message" => "File not found."]);
+            exit;
+        }
+
+        // Set headers and output file
+        header("Content-Type: " . $fileInfo->contentType);
+        header("Content-Disposition: inline; filename=\"" . $fileInfo->filename . "\"");
+
+        fclose($stream); // Close the output stream
+    } catch (Exception $e) {
+        echo json_encode(["status" => "fail", "message" => "Error retrieving file: " . $e->getMessage()]);
+        exit;
+    }
 } else {
     echo json_encode(["status" => "fail", "message" => "Invalid endpoint or method."]);
 }
