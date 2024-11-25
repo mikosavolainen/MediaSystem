@@ -328,7 +328,7 @@ try {
 
     try {
         // Convert file ID to MongoDB ObjectId
-        $fileObjectId = new MongoDB\BSON\ObjectId($fileId);
+            $fileObjectId = new MongoDB\BSON\ObjectId("673f1e4e7fc4bbc405035c83");
 
         // Retrieve file from GridFS
         $stream = fopen('php://output', 'wb'); // Output stream for the file
