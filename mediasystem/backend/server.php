@@ -301,7 +301,7 @@ try {
 
 
 }   elseif ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'get-image') {
-    
+    // Verify JWT Token (optional, if you want to secure access)
     $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
     if (empty($authHeader)) {
         echo json_encode(["status" => "fail", "message" => "Authorization header is missing."]);
