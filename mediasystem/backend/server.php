@@ -137,10 +137,8 @@ if ($fileStream === false) {
     exit;
 }
 
-// Tarkista metadata ja varmista, että se on taulukko
 if (!empty($metadata) && is_string($metadata)) {
-    // Muutetaan metadata objektille, jos se on merkkijono
-    $metadata = ['info' => $metadata]; // Esimerkki metadata-objektista
+    $metadata = ['info' => $metadata]; 
 }
 
 // Luo GridFS-tiedosto-dokumentti
@@ -150,7 +148,7 @@ try {
         $file['name'], 
         $fileStream,
         [
-            'metadata' => $metadata, // metadata nyt taulukkona
+            'metadata' => $metadata, 
             'contentType' => $file['type']
         ]
     );
