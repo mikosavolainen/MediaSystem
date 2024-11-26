@@ -43,12 +43,20 @@ const FetchImages = ({ token }) => {
             {!loading && images.length === 0 && !error && <Alert severity="info">No images found.</Alert>}
             <Box display="flex" flexWrap="wrap" justifyContent="center" mt={2}>
                 {images.map((image, index) => (
-                    <Box key={index} m={2} p={1} border="1px solid #ccc" borderRadius="8px">
+                    <Box key={index} m={2} p={1} display="flex" flexDirection="column" border="1px solid #ccc" borderRadius="8px">
+                        from: {image.created_by}
                         <img
                             src={`http://localhost:24243/mediasystem/backend/server.php?action=get-image&file_id=${image.media_id}`}
                             alt={`Uploaded Media ${index + 1}`}
                             style={{ maxWidth: '150px', maxHeight: '150px', objectFit: 'cover' }}
                         />
+                        Status: {image.status}
+                        <br></br>
+                        {image.assigned_to ? (
+                            `Assigned to: ${image.assigned_to}`
+                        ) : (
+                            "Not assigned"
+                        )}
                     </Box>
                 ))}
             </Box>

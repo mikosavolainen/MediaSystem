@@ -104,7 +104,6 @@ const AuthPage = ({ token, setToken }) => {
                 console.log(data)
                 if (data.status == "success") {
                     setToken(data.token);
-                    alert(`${isLogin ? "Login" : "Registration"} successful! Token: ${data.token}`);
                 }
             } else {
                 const errorData = await response.json();
