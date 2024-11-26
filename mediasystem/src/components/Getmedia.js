@@ -45,7 +45,7 @@ const FetchImages = ({ token }) => {
                 {images.map((image, index) => (
                     <Box key={index} m={2} p={1} border="1px solid #ccc" borderRadius="8px">
                         <img
-                            src={`http://localhost:24243/mediasystem/backend/server.php?action=get-image&file_id=${image.file_id}`}
+                            src={`http://localhost:24243/mediasystem/backend/server.php?action=get-image&file_id=${image.media_id}`}
                             alt={`Uploaded Media ${index + 1}`}
                             style={{ maxWidth: '150px', maxHeight: '150px', objectFit: 'cover' }}
                         />

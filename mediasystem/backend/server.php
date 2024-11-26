@@ -130,49 +130,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'register') {
     // MongoDB GridFS initialization
     $mongoGridFS = $mongoDatabase->selectGridFSBucket();
 
-// Avaa tiedosto lukemista varten
-$fileStream = fopen($file['tmp_name'], 'rb');
-if ($fileStream === false) {
-    echo json_encode(["status" => "fail", "message" => "Failed to open file for reading."]);
-    exit;
-}
-
-if (!empty($metadata) && is_string($metadata)) {
-    $metadata = ['info' => $metadata]; 
-}
-
-// Luo GridFS-tiedosto-dokumentti
-try {
-    // Lataa tiedosto GridFS:ään
-    $fileId = $mongoGridFS->uploadFromStream(
-        $file['name'], 
-        $fileStream,
-        [
-            'metadata' => $metadata, 
-            'contentType' => $file['type']
-        ]
-    );
-
-    fclose($fileStream); // Sulje tiedoston stream
-
-    // Luo dokumentti, joka tallennetaan MongoDB:hen (tallennetaan tiedoston ID ja metadata)
-    $document = [
-        'file_id' => $fileId,
-        'metadata' => $metadata, // metadata tallennetaan
-        'upload_date' => new MongoDB\BSON\UTCDateTime(),
-    ];
-
-    // Lisää dokumentti MongoDB:hen
-    $mongoResult = $mongoCollection->insertOne($document);
-
-    if ($mongoResult->getInsertedCount() > 0) {
-        echo json_encode(["status" => "success", "message" => "Media uploaded and saved in MongoDB."]);
-    } else {
-        echo json_encode(["status" => "fail", "message" => "Failed to save the media in MongoDB."]);
+    // Avaa tiedosto lukemista varten
+    $fileStream = fopen($file['tmp_name'], 'rb');
+    if ($fileStream === false) {
+        echo json_encode(["status" => "fail", "message" => "Failed to open file for reading."]);
+        exit;
     }
-} catch (Exception $e) {
-    echo json_encode(["status" => "fail", "message" => "Error uploading file to MongoDB GridFS: " . $e->getMessage()]);
-}
+
+    if (!empty($metadata) && is_string($metadata)) {
+        $metadata = ['info' => $metadata]; 
+    }
+
+    // Luo GridFS-tiedosto-dokumentti
+    try {
+        // Lataa tiedosto GridFS:ään
+        $fileId = $mongoGridFS->uploadFromStream(
+            $file['name'], 
+            $fileStream,
+            [
+                'metadata' => $metadata, 
+                'contentType' => $file['type']
+            ]
+        );
+
+        fclose($fileStream); // Sulje tiedoston stream
+
+        // Luo dokumentti, joka tallennetaan MongoDB:hen (tallennetaan tiedoston ID ja metadata)
+        $document = [
+            'file_id' => $fileId,
+            'metadata' => $metadata, // metadata tallennetaan
+            'upload_date' => new MongoDB\BSON\UTCDateTime(),
+        ];
+
+        // Lisää dokumentti MongoDB:hen
+        $mongoResult = $mongoCollection->insertOne($document);
+
+        if ($mongoResult->getInsertedCount() > 0) {
+            echo json_encode(["status" => "success", "message" => "Media uploaded and saved in MongoDB."]);
+        } else {
+            echo json_encode(["status" => "fail", "message" => "Failed to save the media in MongoDB."]);
+        }
+    } catch (Exception $e) {
+        echo json_encode(["status" => "fail", "message" => "Error uploading file to MongoDB GridFS: " . $e->getMessage()]);
+    }
 }
  elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'assign-task') {
     // Verify JWT Token
@@ -301,26 +301,6 @@ try {
 
 
 }   elseif ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'get-image') {
-    // Verify JWT Token (optional, if you want to secure access)
-    $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
-    if (empty($authHeader)) {
-        echo json_encode(["status" => "fail", "message" => "Authorization header is missing."]);
-        exit;
-    }
-
-    list($jwt) = sscanf($authHeader, 'Bearer %s');
-    if (empty($jwt)) {
-        echo json_encode(["status" => "fail", "message" => "Invalid token format."]);
-        exit;
-    }
-
-    try {
-        $decoded = JWT::decode($jwt, new Key($jwt_secret, 'HS256'));
-    } catch (Exception $e) {
-        echo json_encode(["status" => "fail", "message" => "Unauthorized. " . $e->getMessage()]);
-        exit;
-    }
-
     // Get file_id from the query parameters
     $fileId = $_GET['file_id'] ?? '';
     if (empty($fileId)) {
@@ -330,29 +310,34 @@ try {
 
     try {
         // Convert file ID to MongoDB ObjectId
-            $fileObjectId = new MongoDB\BSON\ObjectId("673f1e4e7fc4bbc405035c83");
+        $fileObjectId = new MongoDB\BSON\ObjectId($fileId);
 
         // Retrieve file from GridFS
-        $stream = fopen('php://output', 'wb'); // Output stream for the file
         $mongoGridFS = $mongoDatabase->selectGridFSBucket();
-        $mongoGridFS->downloadToStream($fileObjectId, $stream);
-
-        // Retrieve the file's metadata
         $fileInfo = $mongoGridFS->findOne(['_id' => $fileObjectId]);
+
         if (!$fileInfo) {
             echo json_encode(["status" => "fail", "message" => "File not found."]);
             exit;
         }
 
-        // Set headers and output file
+        // Set headers for the image
         header("Content-Type: " . $fileInfo->contentType);
         header("Content-Disposition: inline; filename=\"" . $fileInfo->filename . "\"");
 
-        fclose($stream); // Close the output stream
+        // Open the stream and output the entire file at once
+        $stream = $mongoGridFS->openDownloadStream($fileObjectId);
+        $imageData = stream_get_contents($stream);  // Read the entire file at once
+
+        // Output the image
+        echo $imageData;
+
+        fclose($stream); // Close the stream after outputting the image
     } catch (Exception $e) {
         echo json_encode(["status" => "fail", "message" => "Error retrieving file: " . $e->getMessage()]);
         exit;
     }
+
 }elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'create-task') {
     // Verify JWT Token
     $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
@@ -390,7 +375,95 @@ try {
         echo json_encode(["status" => "fail", "message" => "Task creation failed: " . mysqli_error($conn)]);
     }
 
-} 
+} elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'create-task-with-media'){
+    // Verify JWT Token (no 'Bearer' prefix)
+    $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+    if (empty($authHeader)) {
+        echo json_encode(["status" => "fail", "message" => "Authorization header is missing."]);
+        exit;
+    }
+
+    list($jwt) = sscanf($authHeader, 'Bearer %s');
+
+    if (empty($jwt)) {
+        echo json_encode(["status" => "fail", "message" => "Invalid token format."]);
+        exit;
+    }
+
+    try {
+        // Decode JWT token
+        $decoded = JWT::decode($jwt, new Key($jwt_secret, 'HS256'));
+    } catch (Exception $e) {
+        echo json_encode(["status" => "fail", "message" => "Unauthorized. " . $e->getMessage()]);
+        exit;
+    }
+
+    $metadata = $_POST['metadata'] ?? '';
+    $file = $_FILES['file'] ?? null;
+
+    // Validate metadata and file presence
+    if (empty($metadata) || !$file) {
+        echo json_encode(["status" => "fail", "message" => "Metadata or file is missing."]);
+        exit;
+    }
+
+    // Check if the file is valid
+    if ($file['error'] !== UPLOAD_ERR_OK) {
+        echo json_encode(["status" => "fail", "message" => "File upload error."]);
+        exit;
+    }
+
+    // MongoDB GridFS initialization
+    $mongoGridFS = $mongoDatabase->selectGridFSBucket();
+
+    // Avaa tiedosto lukemista varten
+    $fileStream = fopen($file['tmp_name'], 'rb');
+    if ($fileStream === false) {
+        echo json_encode(["status" => "fail", "message" => "Failed to open file for reading."]);
+        exit;
+    }
+
+    if (!empty($metadata) && is_string($metadata)) {
+        $metadata = ['info' => $metadata]; 
+    }
+
+    // Luo GridFS-tiedosto-dokumentti
+    try {
+        // Lataa tiedosto GridFS:ään
+        $fileId = $mongoGridFS->uploadFromStream(
+            $file['name'], 
+            $fileStream,
+            [
+                'metadata' => $metadata, 
+                'contentType' => $file['type']
+            ]
+        );
+
+        fclose($fileStream); // Sulje tiedoston stream
+
+
+
+    } catch (Exception $e) {
+        echo json_encode(["status" => "fail", "message" => "Error uploading file to MongoDB GridFS: " . $e->getMessage()]);
+    }
+
+
+    $title = $_POST['title'] ?? '';
+    $description = $_POST['description'] ?? '';
+    $createdBy = $decoded->username;
+
+    if (empty($title) || empty($description)) {
+        echo json_encode(["status" => "fail", "message" => "Title or description is missing."]);
+        exit;
+    }
+
+    $query = "INSERT INTO tasks (title, description, created_by, media_id) VALUES ('$title', '$description', '$createdBy','$fileId')";
+    if (mysqli_query($conn, $query)) {
+        echo json_encode(["status" => "success", "message" => "Task created successfully."]);
+    } else {
+        echo json_encode(["status" => "fail", "message" => "Task creation failed: " . mysqli_error($conn)]);
+    }
+}
 else {
     echo json_encode(["status" => "fail", "message" => "Invalid endpoint or method."]);
 }
