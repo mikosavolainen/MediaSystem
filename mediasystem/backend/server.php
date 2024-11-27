@@ -1,8 +1,8 @@
 <?php
 // Allow Cross-Origin Resource Sharing (CORS)
-header("Access-Control-Allow-Origin: *"); 
-header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS"); 
-header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With"); 
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
@@ -10,6 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 require 'vendor/autoload.php';
+
 use \Firebase\JWT\JWT;
 use \Firebase\JWT\KEY;
 
@@ -34,7 +35,7 @@ try {
     $mongoDatabase = $mongoClient->mediaserver;
     $mongoCollection = $mongoDatabase->react_php;
 } catch (Exception $e) {
-    die(json_encode(["status" => "fail", "message" => "MongoDB connection failed: " . $e->getMessage()]));  
+    die(json_encode(["status" => "fail", "message" => "MongoDB connection failed: " . $e->getMessage()]));
 }
 
 if (!isset($_GET['action'])) {
@@ -74,12 +75,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'register') {
     if (mysqli_num_rows($result) > 0) {
         $user = mysqli_fetch_assoc($result);
 
-       
+
         $payload = [
-            'iss' => 'your_issuer',  
-            'iat' => time(),        
-            'exp' => time() + 3600, 
-            'username' => $username  
+            'iss' => 'your_issuer',
+            'iat' => time(),
+            'exp' => time() + 3600,
+            'username' => $username
         ];
 
         $jwt = JWT::encode($payload, $jwt_secret, 'HS256');
@@ -138,17 +139,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'register') {
     }
 
     if (!empty($metadata) && is_string($metadata)) {
-        $metadata = ['info' => $metadata]; 
+        $metadata = ['info' => $metadata];
     }
 
     // Luo GridFS-tiedosto-dokumentti
     try {
         // Lataa tiedosto GridFS:ään
         $fileId = $mongoGridFS->uploadFromStream(
-            $file['name'], 
+            $file['name'],
             $fileStream,
             [
-                'metadata' => $metadata, 
+                'metadata' => $metadata,
                 'contentType' => $file['type']
             ]
         );
@@ -173,8 +174,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'register') {
     } catch (Exception $e) {
         echo json_encode(["status" => "fail", "message" => "Error uploading file to MongoDB GridFS: " . $e->getMessage()]);
     }
-}
- elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'assign-task') {
+} elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'assign-task') {
     // Verify JWT Token
     $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
     if (empty($authHeader)) {
@@ -247,7 +247,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'register') {
     } else {
         echo json_encode(["status" => "fail", "message" => "Review update failed."]);
     }
-} elseif ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'get-tasks') {
+}elseif ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'get-tasks') {
     // Verify JWT Token
     $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
     if (empty($authHeader)) {
@@ -268,39 +268,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'register') {
         exit;
     }
 
-    $role = $_GET['role'] ?? '';
+    // Fetch user role from database
+    $stmt = $conn->prepare("SELECT role FROM users WHERE username = ?");
+    $stmt->bind_param("s", $decoded->username);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $userdata = $result->fetch_assoc();
+    $role = $userdata['role'] ?? null;
 
     if (empty($role)) {
-        echo json_encode(["status" => "fail", "message" => "Role is missing."]);
+        echo json_encode(["status" => "fail", "message" => "Role is missing or invalid."]);
         exit;
     }
 
-    if ($role === 'admin') {
+    // Prepare query based on role
+    $query = "";
+    if ($role === 'sysadmin') {
         $query = "SELECT * FROM tasks";
+        $stmt = $conn->prepare($query);
     } elseif ($role === 'expert') {
         $expertId = $_GET['user_id'] ?? '';
-        $query = "SELECT * FROM tasks WHERE assigned_to='$expertId'";
-    } elseif ($role === 'site_builder') {
-        $builderId = $_GET['user_id'] ?? '';
-        $query = "SELECT * FROM tasks WHERE created_by='$builderId'";
+        if (empty($expertId)) {
+            echo json_encode(["status" => "fail", "message" => "User ID is required for expert role."]);
+            exit;
+        }
+        $query = "SELECT * FROM tasks WHERE assigned_to = ?";
+        $stmt = $conn->prepare($query);
+        $stmt->bind_param("s", $expertId);
+    } elseif ($role === 'user') {
+        $query = "SELECT * FROM tasks WHERE created_by = ?";
+        $stmt = $conn->prepare($query);
+        $stmt->bind_param("s", $decoded->username);
     } else {
         echo json_encode(["status" => "fail", "message" => "Invalid role."]);
         exit;
     }
 
-    $result = mysqli_query($conn, $query);
-    $tasks = mysqli_fetch_all($result, MYSQLI_ASSOC);
+    // Execute and fetch results
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $tasks = $result->fetch_all(MYSQLI_ASSOC);
 
     echo json_encode(["status" => "success", "tasks" => $tasks]);
+    $stmt->close();
 } elseif ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'get-reports') {
     $query = "SELECT assigned_to, COUNT(*) as completed_tasks FROM tasks WHERE status='OK' GROUP BY assigned_to";
     $result = mysqli_query($conn, $query);
 
     $report = mysqli_fetch_all($result, MYSQLI_ASSOC);
     echo json_encode(["status" => "success", "report" => $report]);
-
-
-}   elseif ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'get-image') {
+} elseif ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'get-image') {
     // Get file_id from the query parameters
     $fileId = $_GET['file_id'] ?? '';
     if (empty($fileId)) {
@@ -337,8 +354,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'register') {
         echo json_encode(["status" => "fail", "message" => "Error retrieving file: " . $e->getMessage()]);
         exit;
     }
-
-}elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'create-task') {
+} elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'create-task') {
     // Verify JWT Token
     $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
     if (empty($authHeader)) {
@@ -374,8 +390,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'register') {
     } else {
         echo json_encode(["status" => "fail", "message" => "Task creation failed: " . mysqli_error($conn)]);
     }
-
-} elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'create-task-with-media'){
+} elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'create-task-with-media') {
     // Verify JWT Token (no 'Bearer' prefix)
     $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
     if (empty($authHeader)) {
@@ -424,17 +439,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'register') {
     }
 
     if (!empty($metadata) && is_string($metadata)) {
-        $metadata = ['info' => $metadata]; 
+        $metadata = ['info' => $metadata];
     }
 
     // Luo GridFS-tiedosto-dokumentti
     try {
         // Lataa tiedosto GridFS:ään
         $fileId = $mongoGridFS->uploadFromStream(
-            $file['name'], 
+            $file['name'],
             $fileStream,
             [
-                'metadata' => $metadata, 
+                'metadata' => $metadata,
                 'contentType' => $file['type']
             ]
         );
@@ -463,10 +478,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'register') {
     } else {
         echo json_encode(["status" => "fail", "message" => "Task creation failed: " . mysqli_error($conn)]);
     }
-}
-else {
+} else {
     echo json_encode(["status" => "fail", "message" => "Invalid endpoint or method."]);
 }
 
 mysqli_close($conn);
-?>

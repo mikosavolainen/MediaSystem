@@ -10,7 +10,7 @@ const FetchImages = ({ token }) => {
         setLoading(true);
         setError('');
         try {
-            const response = await fetch('http://localhost:24243/mediasystem/backend/server.php?action=get-tasks&&role=admin', {
+            const response = await fetch('http://localhost:24243/mediasystem/backend/server.php?action=get-tasks', {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,

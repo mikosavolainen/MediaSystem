@@ -101,7 +101,6 @@ const AuthPage = ({ token, setToken }) => {
 
             if (response.ok) {
                 const data = await response.json();
-                console.log(data)
                 if (data.status == "success") {
                     setToken(data.token);
                 }
