@@ -19,7 +19,7 @@ use MongoDB\Client as MongoClient;
 $serverName = "192.168.1.123";
 
 
-//$serverName = "37.136.11.1";
+//$serverName = "188.67.141.11";
 $userName = "root";
 $password = "1234592";
 $databaseName = "mediaserver";
@@ -34,7 +34,7 @@ if (!$conn) {
 }
 
 try {
-    //$mongoClient = new MongoClient("mongodb://Kissa:KissaKala2146@37.136.11.1:27018/");
+    //$mongoClient = new MongoClient("mongodb://Kissa:KissaKala2146@188.67.141.11:27018/");
     $mongoClient = new MongoClient("mongodb://Kissa:KissaKala2146@192.168.1.123:27018/");
     $mongoDatabase = $mongoClient->mediaserver;
     $mongoCollection = $mongoDatabase->react_php;
