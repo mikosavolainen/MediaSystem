@@ -311,14 +311,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'register') {
         $query = "SELECT * FROM tasks";
         $stmt = $conn->prepare($query);
     } elseif ($role === 'expert') {
-        $expertId = $_GET['user_id'] ?? '';
-        if (empty($expertId)) {
-            echo json_encode(["status" => "fail", "message" => "User ID is required for expert role."]);
-            exit;
-        }
         $query = "SELECT * FROM tasks WHERE assigned_to = ?";
         $stmt = $conn->prepare($query);
-        $stmt->bind_param("s", $expertId);
+        $stmt->bind_param("s", $decoded->username);
     } elseif ($role === 'user') {
         $query = "SELECT * FROM tasks WHERE created_by = ?";
         $stmt = $conn->prepare($query);
