@@ -195,21 +195,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'register') {
         exit;
     }
 
-    $taskId = $_POST['task_id'] ?? '';
-    $expertId = $_POST['expert_id'] ?? '';
+    $taskId = $_POST['media_id'] ?? '';
+    $expertId = $_POST['assigned_to'] ?? '';
 
     if (empty($taskId) || empty($expertId)) {
-        echo json_encode(["status" => "fail", "message" => "Task ID or expert ID is missing."]);
+        echo json_encode(["status" => "fail", "message" => "Task ID or expert ID is missing...",$expertId=>$taskId]);
         exit;
     }
 
-    $query = "UPDATE tasks SET assigned_to='$expertId' WHERE id='$taskId'";
+    $query = "UPDATE tasks SET assigned_to='$expertId' WHERE media_id='$taskId'";
     if (mysqli_query($conn, $query)) {
         echo json_encode(["status" => "success", "message" => "Task assigned."]);
     } else {
         echo json_encode(["status" => "fail", "message" => "Task assignment failed."]);
     }
-} elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'review-media') {
+} elseif($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'get-experts'){
+
+    $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+    if (empty($authHeader)) {
+        echo json_encode(["status" => "fail", "message" => "Authorization header is missing."]);
+        exit;
+    }
+
+    list($jwt) = sscanf($authHeader, 'Bearer %s');
+    if (empty($jwt)) {
+        echo json_encode(["status" => "fail", "message" => "Invalid token format."]);
+        exit;
+    }
+
+    try {
+        $decoded = JWT::decode($jwt, new Key($jwt_secret, 'HS256'));
+    } catch (Exception $e) {
+        echo json_encode(["status" => "fail", "message" => "Unauthorized. " . $e->getMessage()]);
+        exit;
+    }
+    $query = "SELECT username FROM users WHERE role = 'expert'";
+    $x = mysqli_query($conn, $query);
+    $report = mysqli_fetch_all($x, MYSQLI_ASSOC);
+    echo json_encode(["status" => "success", "report" => $report]);
+}elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'review-media') {
     // Verify JWT Token
     $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
     if (empty($authHeader)) {
