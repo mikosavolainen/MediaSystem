@@ -1,13 +1,21 @@
-import { useState } from "react";
-import React from 'react';
-import { Box, AppBar, Toolbar, Button } from "@mui/material";
+// src/App.js
+import React, { useState, useEffect } from 'react';
+import { Box, AppBar, Toolbar, Button } from '@mui/material';
 import { Route, Routes, Link } from 'react-router-dom';
-import Login from "./components/login";
-import UploadMedia from "./components/UploadMedia";
-import Getmedia from "./components/Getmedia";
+import Login from './components/login';
+import UploadMedia from './components/UploadMedia';
+import Getmedia from './components/Getmedia';
+import ReviewMedia from './components/ReviewMedia';
 
 function App() {
-  const [token, setToken] = useState(null);
+  const [token, setToken] = useState(localStorage.getItem('token'));
+
+
+  useEffect(() => {
+    if (token) {
+      localStorage.setItem('token', token);
+    }
+  }, [token]);
 
   if (!token) {
     return <Login token={token} setToken={setToken} />;
@@ -15,20 +23,21 @@ function App() {
 
   return (
     <Box width="100%" height="100%">
-      {/* Header */}
+
       <AppBar position="static">
         <Toolbar>
           <Button component={Link} to="/" color="inherit">Upload Media</Button>
           <Button component={Link} to="/getmedia" color="inherit">Get Media</Button>
-          <Button color="inherit" onClick={() => setToken(null)}>Logout</Button>
+          <Button color="inherit" onClick={() => { setToken(null); localStorage.removeItem('token'); }}>Logout</Button>
         </Toolbar>
       </AppBar>
 
-      {/* Routes */}
+
       <Box p={3}>
         <Routes>
           <Route path="/" element={<UploadMedia token={token} />} />
           <Route path="/getmedia" element={<Getmedia token={token} />} />
+          <Route path="/review-media/:id" element={<ReviewMedia token={token} />} />
         </Routes>
       </Box>
     </Box>

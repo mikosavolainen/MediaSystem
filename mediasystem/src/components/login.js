@@ -174,7 +174,7 @@ const AuthPage = ({ token, setToken }) => {
                         </Button>
                     </Front>
 
-                    {/* Back: Register Form */}
+
                     <Back>
                         <Typography variant="h4" gutterBottom>
                             Register
