@@ -15,7 +15,11 @@ use \Firebase\JWT\KEY;
 
 use MongoDB\Client as MongoClient;
 
-$serverName = "37.136.11.1";
+//localhostttt
+$serverName = "192.168.1.123";
+
+
+//$serverName = "37.136.11.1";
 $userName = "root";
 $password = "1234592";
 $databaseName = "mediaserver";
@@ -30,7 +34,8 @@ if (!$conn) {
 }
 
 try {
-    $mongoClient = new MongoClient("mongodb://Kissa:KissaKala2146@37.136.11.1:27018/");
+    //$mongoClient = new MongoClient("mongodb://Kissa:KissaKala2146@37.136.11.1:27018/");
+    $mongoClient = new MongoClient("mongodb://Kissa:KissaKala2146@192.168.1.123:27018/");
     $mongoDatabase = $mongoClient->mediaserver;
     $mongoCollection = $mongoDatabase->react_php;
 } catch (Exception $e) {
