@@ -67,7 +67,84 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'register') {
     } else {
         echo json_encode(["status" => "fail", "message" => "User registration failed: " . mysqli_error($conn)]);
     }
-} elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'login') {
+}elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'sendchat') {
+    $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+    if (empty($authHeader)) {
+        echo json_encode(["status" => "fail", "message" => "Authorization header is missing."]);
+        exit;
+    }
+
+    list($jwt) = sscanf($authHeader, 'Bearer %s');
+    if (empty($jwt)) {
+        echo json_encode(["status" => "fail", "message" => "Invalid token format."]);
+        exit;
+    }
+
+    try {
+        $decoded = JWT::decode($jwt, new Key($jwt_secret, 'HS256'));
+    } catch (Exception $e) {
+        echo json_encode(["status" => "fail", "message" => "Unauthorized. " . $e->getMessage()]);
+        exit;
+    }
+    $task_id = $_POST['task_id'] ?? null;
+    $message = $_POST['message'] ?? '';
+
+  
+    if (empty($task_id) || empty($message)) {
+        echo json_encode(["status" => "fail", "message" => "Task ID, sender, or message is missing."]);
+        exit;
+    }
+
+    $query = "INSERT INTO chat (task_id, sender, texts) VALUES ('$task_id', '$decoded->username', '$message')";
+    
+    if (mysqli_query($conn, $query)) {
+        echo json_encode(["status" => "success", "message" => "Chat message sent successfully."]);
+    } else {
+        echo json_encode(["status" => "fail", "message" => "Chat message sending failed: " . mysqli_error($conn)]);
+    }
+} 
+elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'getchat') {
+    $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+    if (empty($authHeader)) {
+        echo json_encode(["status" => "fail", "message" => "Authorization header is missing."]);
+        exit;
+    }
+
+    list($jwt) = sscanf($authHeader, 'Bearer %s');
+    if (empty($jwt)) {
+        echo json_encode(["status" => "fail", "message" => "Invalid token format."]);
+        exit;
+    }
+
+    try {
+        $decoded = JWT::decode($jwt, new Key($jwt_secret, 'HS256'));
+    } catch (Exception $e) {
+        echo json_encode(["status" => "fail", "message" => "Unauthorized. " . $e->getMessage()]);
+        exit;
+    }
+    $task_id = $_POST['task_id'] ?? null;
+
+    $stmt = $conn->prepare("SELECT * FROM chat WHERE task_id = ?");
+    $stmt->bind_param("s", $task_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    // Initialize an array to store all the fetched data
+    $userdata = [];
+    
+    while ($row = $result->fetch_assoc()) {
+        $userdata[] = $row;  // Add each row to the userdata array
+    }
+    
+    // Now $userdata contains all rows where task_id matches
+    
+    if ($userdata) {
+        echo json_encode(["status" => "success", "report" => $userdata]);
+    } else {
+        echo json_encode(["status" => "fail", "message" => "Chat message sending failed: " . mysqli_error($conn)]);
+    }
+} 
+elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'login') {
     $username = $_POST['username'] ?? '';
     $password = $_POST['password'] ?? '';
 
