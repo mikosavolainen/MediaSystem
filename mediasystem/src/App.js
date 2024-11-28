@@ -29,7 +29,7 @@ function App() {
         <Toolbar>
           <Button component={Link} to="/" color="inherit">Upload Media</Button>
           <Button component={Link} to="/getmedia" color="inherit">Get Media</Button>
-          <Button component={Link} to="/Getsucsess" color="inherit">Show Sucsess</Button>
+          <Button component={Link} to="/Getsuccess" color="inherit">Show Success</Button>
 
           
           <Button color="inherit" onClick={() => { setToken(null); localStorage.removeItem('token'); }}>Logout</Button>
@@ -41,7 +41,7 @@ function App() {
         <Routes>
           <Route path="/" element={<UploadMedia token={token} />} />
           <Route path="/getmedia" element={<Getmedia token={token} />} />
-          <Route path="/Getsucsess" element={<Getsucsess token={token} />} />
+          <Route path="/Getsuccess" element={<Getsucsess token={token} />} />
           <Route path="/review-media/:id" element={<ReviewMedia token={token} />} />
         </Routes>
       </Box>
