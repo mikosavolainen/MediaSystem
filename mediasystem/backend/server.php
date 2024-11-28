@@ -17,6 +17,7 @@ use MongoDB\Client as MongoClient;
 
 //localhostttt
 //$serverName = "192.168.1.123";
+//$serverName = "192.168.1.123";
 
 
 $serverName = "188.67.141.11";
@@ -35,7 +36,7 @@ if (!$conn) {
 
 try {
     $mongoClient = new MongoClient("mongodb://Kissa:KissaKala2146@188.67.141.11:27018/");
-   // $mongoClient = new MongoClient("mongodb://Kissa:KissaKala2146@192.168.1.123:27018/");
+    //$mongoClient = new MongoClient("mongodb://Kissa:KissaKala2146@192.168.1.123:27018/");
     $mongoDatabase = $mongoClient->mediaserver;
     $mongoCollection = $mongoDatabase->react_php;
 } catch (Exception $e) {
@@ -167,7 +168,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'register') {
             'upload_date' => new MongoDB\BSON\UTCDateTime(),
         ];
 
-        
+
         $mongoResult = $mongoCollection->insertOne($document);
 
         if ($mongoResult->getInsertedCount() > 0) {
@@ -201,19 +202,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'register') {
 
     $taskId = $_POST['media_id'] ?? '';
     $expertId = $_POST['assigned_to'] ?? '';
+    $stmt = $conn->prepare("SELECT role FROM users WHERE username = ?");
+    $stmt->bind_param("s", $decoded->username);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $userdata = $result->fetch_assoc();
+    $role = $userdata['role'] ?? null;
+    if ($role == "sysadmin") {
+        if (empty($taskId) || empty($expertId)) {
+            echo json_encode(["status" => "fail", "message" => "Task ID or expert ID is missing...", $expertId => $taskId]);
+            exit;
+        }
 
-    if (empty($taskId) || empty($expertId)) {
-        echo json_encode(["status" => "fail", "message" => "Task ID or expert ID is missing...",$expertId=>$taskId]);
-        exit;
+        $query = "UPDATE tasks SET assigned_to='$expertId' WHERE media_id='$taskId'";
+        if (mysqli_query($conn, $query)) {
+            echo json_encode(["status" => "success", "message" => "Task assigned."]);
+        } else {
+            echo json_encode(["status" => "fail", "message" => "Task assignment failed."]);
+        }
+    }else{
+        echo json_encode(["status"=>"fail","message"=>"You are not system admin"]);
     }
-
-    $query = "UPDATE tasks SET assigned_to='$expertId' WHERE media_id='$taskId'";
-    if (mysqli_query($conn, $query)) {
-        echo json_encode(["status" => "success", "message" => "Task assigned."]);
-    } else {
-        echo json_encode(["status" => "fail", "message" => "Task assignment failed."]);
-    }
-} elseif($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'get-experts'){
+} elseif ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'get-experts') {
 
     $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
     if (empty($authHeader)) {
@@ -233,11 +243,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'register') {
         echo json_encode(["status" => "fail", "message" => "Unauthorized. " . $e->getMessage()]);
         exit;
     }
-    $query = "SELECT username FROM users WHERE role = 'expert'";
-    $x = mysqli_query($conn, $query);
-    $report = mysqli_fetch_all($x, MYSQLI_ASSOC);
-    echo json_encode(["status" => "success", "report" => $report]);
-}elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'review-media') {
+        $stmt = $conn->prepare("SELECT role FROM users WHERE username = ?");
+    $stmt->bind_param("s", $decoded->username);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $userdata = $result->fetch_assoc();
+    $role = $userdata['role'] ?? null;
+    if ($role == "sysadmin"){
+        $query = "SELECT username FROM users WHERE role = 'expert'";
+        $x = mysqli_query($conn, $query);
+        $report = mysqli_fetch_all($x, MYSQLI_ASSOC);
+        echo json_encode(["status" => "success", "report" => $report]);
+    }else{
+        echo json_encode(["status" => "success", "message" => "You Are not sysadmin"]);
+    }
+
+} elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'review-media') {
 
     $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
     if (empty($authHeader)) {
@@ -276,7 +297,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'register') {
     } else {
         echo json_encode(["status" => "fail", "message" => "Review update failed."]);
     }
-}elseif ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'get-tasks') {
+} elseif ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'get-tasks') {
 
     $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
     if (empty($authHeader)) {
@@ -428,7 +449,7 @@ elseif ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'get-reports') {
         $stream = $mongoGridFS->openDownloadStream($fileObjectId);
         $imageData = stream_get_contents($stream);
 
- 
+
         echo $imageData;
 
         fclose($stream);
@@ -436,7 +457,7 @@ elseif ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'get-reports') {
         echo json_encode(["status" => "fail", "message" => "Error retrieving file: " . $e->getMessage()]);
         exit;
     }
-}elseif ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'get-media-details') {
+} elseif ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'get-media-details') {
 
     $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
     if (empty($authHeader)) {
@@ -486,15 +507,14 @@ elseif ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'get-reports') {
             'title' => $fileInfo['title'],
             'upload_date' => $fileInfo['created_at'],
             'description' => $fileInfo['description'],
-            'media_id'=>$fileInfo['media_id'],
-            'status'=>$fileInfo['status'],
-            'created_by'=>$fileInfo['created_by'],
-            'assigned_to'=>$fileInfo['assigned_to']
+            'media_id' => $fileInfo['media_id'],
+            'status' => $fileInfo['status'],
+            'created_by' => $fileInfo['created_by'],
+            'assigned_to' => $fileInfo['assigned_to']
 
         ];
 
         echo json_encode(["status" => "success", "media_details" => $mediaDetails]);
-
     } catch (Exception $e) {
         echo json_encode(["status" => "fail", "message" => "Error retrieving file details: " . $e->getMessage()]);
         exit;
@@ -522,7 +542,7 @@ elseif ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'get-reports') {
 
     $title = $_POST['title'] ?? '';
     $description = $_POST['description'] ?? '';
-    $createdBy = $decoded->username; 
+    $createdBy = $decoded->username;
 
     if (empty($title) || empty($description)) {
         echo json_encode(["status" => "fail", "message" => "Title or description is missing."]);
@@ -599,9 +619,6 @@ elseif ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'get-reports') {
         );
 
         fclose($fileStream);
-
-
-
     } catch (Exception $e) {
         echo json_encode(["status" => "fail", "message" => "Error uploading file to MongoDB GridFS: " . $e->getMessage()]);
     }

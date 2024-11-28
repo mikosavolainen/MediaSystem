@@ -1,7 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Alert, CircularProgress, Button } from '@mui/material';
-import { jwtDecode } from 'jwt-decode';
-
+import {
+    Grid,
+    Card,
+    CardContent,
+    CardActions,
+    Typography,
+    Select,
+    MenuItem,
+    Button,
+    Alert,
+    Box,
+    Skeleton,
+} from '@mui/material';
+import {jwtDecode} from 'jwt-decode';
 
 const FetchImages = ({ token }) => {
     const [images, setImages] = useState([]);
@@ -11,11 +22,13 @@ const FetchImages = ({ token }) => {
 
     const fetchExperts = async () => {
         try {
-            const response = await fetch('http://localhost:24243/mediasystem/backend/server.php?action=get-experts', {
-                method: 'GET',
-                headers: { 'Authorization': `Bearer ${token}` },
-            });
-
+            const response = await fetch(
+                'http://localhost:24243/mediasystem/backend/server.php?action=get-experts',
+                {
+                    method: 'GET',
+                    headers: { Authorization: `Bearer ${token}` },
+                }
+            );
             const data = await response.json();
             if (data.status === 'success') {
                 setExperts(data.report || []);
@@ -33,20 +46,21 @@ const FetchImages = ({ token }) => {
 
     const handleAssignmentChange = async (expertId, mediaId) => {
         try {
-            const response = await fetch('http://localhost:24243/mediasystem/backend/server.php?action=assign-task', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'Authorization': `Bearer ${token}`,
-                },
-                body: new URLSearchParams({
-                    media_id: mediaId,
-                    assigned_to: expertId,
-                }),
-            });
-
+            const response = await fetch(
+                'http://localhost:24243/mediasystem/backend/server.php?action=assign-task',
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: new URLSearchParams({
+                        media_id: mediaId,
+                        assigned_to: expertId,
+                    }),
+                }
+            );
             const data = await response.json();
-
             if (data.status === 'success') {
                 setImages((prevImages) =>
                     prevImages.map((image) =>
@@ -68,15 +82,14 @@ const FetchImages = ({ token }) => {
         setLoading(true);
         setError('');
         try {
-            const response = await fetch('http://localhost:24243/mediasystem/backend/server.php?action=get-tasks', {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                },
-            });
-
+            const response = await fetch(
+                'http://localhost:24243/mediasystem/backend/server.php?action=get-tasks',
+                {
+                    method: 'GET',
+                    headers: { Authorization: `Bearer ${token}` },
+                }
+            );
             const data = await response.json();
-
             if (data.status === 'success') {
                 setImages(data.tasks || []);
             } else {
@@ -97,66 +110,95 @@ const FetchImages = ({ token }) => {
     const decode = jwtDecode(token);
 
     return (
-        <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" p={3}>
-            {loading && <CircularProgress />}
+        <Box p={3}>
+            {loading && (
+                <Grid container spacing={3}>
+                    {[1, 2, 3, 4].map((item) => (
+                        <Grid item xs={12} sm={6} md={4} key={item}>
+                            <Skeleton variant="rectangular" height={260} />
+                        </Grid>
+                    ))}
+                </Grid>
+            )}
             {error && <Alert severity="error">{error}</Alert>}
-            {!loading && images.length === 0 && !error && <Alert severity="info">No images found.</Alert>}
-            <Box display="flex" flexWrap="wrap" justifyContent="center" mt={2}>
+            {!loading && images.length === 0 && !error && (
+                <Alert severity="info">No images found.</Alert>
+            )}
+            <Grid container spacing={3}>
                 {images.map((image, index) => (
-                    <Box
-                        key={index}
-                        m={2}
-                        p={1}
-                        display="flex"
-                        flexDirection="column"
-                        border="1px solid #ccc"
-                        borderRadius="8px"
-                        sx={{ height: '260px', position: 'relative' }}
-                    >
-                        <div>From: {image.created_by}</div>
-                        <img
-                            src={`http://localhost:24243/mediasystem/backend/server.php?action=get-image&file_id=${image.media_id}`}
-                            alt={`Uploaded Media ${index + 1}`}
-                            style={{ maxWidth: '150px', maxHeight: '150px', objectFit: 'cover' }}
-                        />
-                        <div>Status: {image.status}</div>
-                        {image.annotations ? ("Annotations: "+image.annotations):("")}
-                        {image.assigned_to ? (
-                            <div>
-                                Assigned to: {image.assigned_to}
-
-                            </div>
-                        ) : (
-                            <select
-                                onChange={(e) => handleAssignmentChange(e.target.value, image.media_id)}
-                                defaultValue=""
-                                style={{ marginBottom: '10px' }}
-                            >
-                                <option value="" disabled>
-                                    Select Expert
-                                </option>
-                                {experts.map((expert) => (
-                                    <option key={expert.username} value={expert.username}>
-                                        {expert.username}
-                                    </option>
-                                ))}
-                            </select>
-                        )}
-                        {image.assigned_to === decode.username && (
-                            <Button
-                                variant="contained"
+                    <Grid item xs={12} sm={6} md={4} key={index}>
+                        <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                            <Box
                                 sx={{
-                                    position: 'absolute',
-                                    bottom: 10,
+                                    width: '100%',
+                                    aspectRatio: '4/3',
+                                    backgroundImage: `url(http://localhost:24243/mediasystem/backend/server.php?action=get-image&file_id=${image.media_id})`,
+                                    backgroundSize: 'contain',
+                                    backgroundRepeat: 'no-repeat',
+                                    backgroundPosition: 'center',
+                                    borderRadius:"25px",
                                 }}
-                                href={`/review-media/${image.id}`}
-                            >
-                                Review
-                            </Button>
-                        )}
-                    </Box>
+                            />
+                            <CardContent>
+                                <Typography variant="subtitle1" gutterBottom>
+                                    From: {image.created_by}
+                                </Typography>
+                                <Typography variant="body2">
+                                    Status: {image.status}
+                                </Typography>
+                                {image.annotations && (
+                                    <Typography variant="body2">
+                                        Annotations: {image.annotations}
+                                    </Typography>
+                                )}
+                                {image.assigned_to ? (
+                                    <Typography variant="body2" color="text.secondary">
+                                        Assigned to: {image.assigned_to}
+                                    </Typography>
+                                ) : (experts.length > 0 && (
+                                    <Select
+                                        fullWidth
+                                        displayEmpty
+                                        value=""
+                                        onChange={(e) =>
+                                            handleAssignmentChange(
+                                                e.target.value,
+                                                image.media_id
+                                            )
+                                        }
+                                        sx={{ mt: 2 }}
+                                    >
+                                        <MenuItem value="" disabled>
+                                            {experts.length > 0
+                                                ? 'Select Expert'
+                                                : 'No Experts Available'}
+                                        </MenuItem>
+                                        {experts.map((expert) => (
+                                            <MenuItem
+                                                key={expert.username}
+                                                value={expert.username}
+                                            >
+                                                {expert.username}
+                                            </MenuItem>
+                                        ))}
+                                    </Select>)
+                                )}
+                            </CardContent>
+                            {image.assigned_to === decode.username && (
+                                <CardActions>
+                                    <Button
+                                        fullWidth
+                                        variant="contained"
+                                        href={`/review-media/${image.id}`}
+                                    >
+                                        Review
+                                    </Button>
+                                </CardActions>
+                            )}
+                        </Card>
+                    </Grid>
                 ))}
-            </Box>
+            </Grid>
         </Box>
     );
 };

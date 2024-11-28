@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { Button, TextField, Box, Alert, Tabs, Tab } from '@mui/material';
-
+import { Button, TextField, Box, Alert, Typography } from '@mui/material';
 
 const ManageTasksAndMedia = ({ token }) => {
     const [taskTitle, setTaskTitle] = useState('');
@@ -35,13 +34,16 @@ const ManageTasksAndMedia = ({ token }) => {
         formData.append('metadata', mediaMetadata);
 
         try {
-            const response = await fetch('http://localhost:24243/mediasystem/backend/server.php?action=create-task-with-media', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                },
-                body: formData,
-            });
+            const response = await fetch(
+                'http://localhost:24243/mediasystem/backend/server.php?action=create-task-with-media',
+                {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                    },
+                    body: formData,
+                }
+            );
 
             const data = await response.json();
 
@@ -61,9 +63,21 @@ const ManageTasksAndMedia = ({ token }) => {
     };
 
     return (
-        <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" width="400px" margin="auto">
+        <Box
+            display="flex"
+            flexDirection="column"
+            alignItems="center"
+            justifyContent="center"
+            width="400px"
+            margin="auto"
+            mt={4}
+        >
             {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
             {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
+
+            <Typography variant="h6" sx={{ mb: 2 }}>
+                Create Task and Link Media
+            </Typography>
 
             <TextField
                 label="Task Title"
@@ -89,13 +103,71 @@ const ManageTasksAndMedia = ({ token }) => {
                 value={mediaMetadata}
                 onChange={(e) => setMediaMetadata(e.target.value)}
             />
-            <input
-                type="file"
-                onChange={handleFileChange}
-                style={{ margin: '16px 0' }}
-            />
-            <Button variant="contained" color="primary" fullWidth onClick={handleSubmit}>
-                Create Task and Link Media
+
+            <Button
+                variant="contained"
+                component="label"
+                fullWidth
+                sx={{ mt: 2 }}
+            >
+                Upload Media
+                <input
+                    type="file"
+                    hidden
+                    onChange={handleFileChange}
+                />
+            </Button>
+
+            {mediaFile && (
+                <Box
+                    mt={2}
+                    display="flex"
+                    flexDirection="column"
+                    alignItems="center"
+                    border="1px solid #ccc"
+                    borderRadius="8px"
+                    p={2}
+                    width="100%"
+                >
+                    <Typography variant="body2" sx={{ mb: 1 }}>
+                        Selected File: {mediaFile.name}
+                    </Typography>
+                    {mediaFile.type.startsWith('image/') && (
+                        <img
+                            src={URL.createObjectURL(mediaFile)}
+                            alt="Preview"
+                            style={{
+                                maxWidth: '100%',
+                                height: 'auto',
+                                maxHeight: '200px',
+                                borderRadius: '4px',
+                            }}
+                        />
+                    )}
+                    {mediaFile.type.startsWith('video/') && (
+                        <video
+                            controls
+                            src={URL.createObjectURL(mediaFile)}
+                            style={{
+                                maxWidth: '100%',
+                                maxHeight: '200px',
+                                marginTop: '10px',
+                                borderRadius: '4px',
+                            }}
+                        />
+                    )}
+                </Box>
+            )}
+
+            <Button
+                variant="contained"
+                color="primary"
+                fullWidth
+                sx={{ mt: 2 }}
+                onClick={handleSubmit}
+                disabled={!taskTitle || !taskDescription || !mediaMetadata || !mediaFile}
+            >
+                Submit
             </Button>
         </Box>
     );
