@@ -334,7 +334,66 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'register') {
 
     echo json_encode(["status" => "success", "tasks" => $tasks]);
     $stmt->close();
-} elseif ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'get-reports') {
+}elseif ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'get-sucsesstasks') {
+
+    $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+    if (empty($authHeader)) {
+        echo json_encode(["status" => "fail", "message" => "Authorization header is missing."]);
+        exit;
+    }
+
+    list($jwt) = sscanf($authHeader, 'Bearer %s');
+    if (empty($jwt)) {
+        echo json_encode(["status" => "fail", "message" => "Invalid token format."]);
+        exit;
+    }
+
+    try {
+        $decoded = JWT::decode($jwt, new Key($jwt_secret, 'HS256'));
+    } catch (Exception $e) {
+        echo json_encode(["status" => "fail", "message" => "Unauthorized. " . $e->getMessage()]);
+        exit;
+    }
+
+    $stmt = $conn->prepare("SELECT role FROM users WHERE username = ?");
+    $stmt->bind_param("s", $decoded->username);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $userdata = $result->fetch_assoc();
+    $role = $userdata['role'] ?? null;
+
+    if (empty($role)) {
+        echo json_encode(["status" => "fail", "message" => "Role is missing or invalid."]);
+        exit;
+    }
+
+    $query = "";
+    if ($role === 'sysadmin') {
+        $query = "SELECT * FROM tasks WHERE status = 'OK'";
+        $stmt = $conn->prepare($query);
+    } elseif ($role === 'expert') {
+        $query = "SELECT * FROM tasks WHERE assigned_to = ? AND status = 'OK'";
+        $stmt = $conn->prepare($query);
+        $stmt->bind_param("s", $decoded->username);
+    } elseif ($role === 'user') {
+        $query = "SELECT * FROM tasks WHERE created_by = ? AND status = 'OK'";
+        $stmt = $conn->prepare($query);
+        $stmt->bind_param("s", $decoded->username);
+    } else {
+        echo json_encode(["status" => "fail", "message" => "Invalid role."]);
+        exit;
+    }
+
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $tasks = $result->fetch_all(MYSQLI_ASSOC);
+
+    echo json_encode(["status" => "success", "tasks" => $tasks]);
+    $stmt->close();
+}
+
+
+elseif ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'get-reports') {
     $query = "SELECT assigned_to, COUNT(*) as completed_tasks FROM tasks WHERE status='OK' GROUP BY assigned_to";
     $result = mysqli_query($conn, $query);
 
