@@ -26,6 +26,8 @@ $password = "1234592";
 $databaseName = "mediaserver";
 $port = 3308;
 
+
+/// THIS IS JWT Secret key DO NOT TOUCH or LEAK THIS!!!!!!!!!!!!!!!!!!!
 $jwt_secret = 'Heh meidän salainen avain :O. ei oo ku meiän! ・:，。★＼(*v*)♪Merry Xmas♪(*v*)/★，。・:・゜ :DD XD XRP ┐( ͡◉ ͜ʖ ͡◉)┌ QSO QRZ ( ͡~ ͜ʖ ͡° ) QRO ( ˘▽˘)っ♨ QRP DLR JKFJ °₊·ˈ∗♡( ˃̶᷇ ‧̫ ˂̶᷆ )♡∗ˈ‧₊°';
 
 
