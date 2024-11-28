@@ -355,7 +355,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'register') {
 
     echo json_encode(["status" => "success", "tasks" => $tasks]);
     $stmt->close();
-}elseif ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'get-sucsesstasks') {
+}elseif ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'get-successtasks') {
 
     $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
     if (empty($authHeader)) {
