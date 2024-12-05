@@ -22,7 +22,7 @@ Open **another terminal** and run these commands:
 
 ```bash
 cd mediasystem/backend
-php composer.phar uninstall
+php composer.phar uninstall **
 php composer.phar require firebase/php-jwt mongodb/mongodb
 php -S localhost:24243 server.php
 ```
@@ -64,7 +64,7 @@ Avaa **toinen pääte** ja suorita siellä seuraavat komennot:
 
 ```bash
 cd mediasystem/backend
-php composer.phar uninstall
+php composer.phar uninstall **
 php composer.phar require firebase/php-jwt mongodb/mongodb
 php -S localhost:24243 server.php
 ```
